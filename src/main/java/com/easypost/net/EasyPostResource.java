@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
+import com.easypost.model.ErrorCollection;
+import com.easypost.model.ErrorContainer;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -310,19 +312,12 @@ public abstract class EasyPostResource {
 		return flatParams;
 	}
 
-	// represents Errors returned as JSON
-	private static class ErrorContainer {
-		private EasyPostResource.Error error;
-	}
-
 	private static class Error {
 		@SuppressWarnings("unused")
 		String type;
 		String message;
-		String code;
 		String param;
 		String error;
-    List<Object> errors;
 	}
 
 	private static String getResponseBody(InputStream responseStream) throws IOException {
@@ -452,16 +447,16 @@ public abstract class EasyPostResource {
 
 	private static void handleAPIError(String rBody, int rCode) throws EasyPostException {
     try {
-      Map<String, Map<String, Object>> errorHash = gson.fromJson(rBody, HashMap.class);
-      Map<String, Object> errorInfoHash = errorHash.get("error");
+		ErrorContainer errorContainer = gson.fromJson(rBody, ErrorContainer.class);
+		ErrorCollection errorInfoHash = errorContainer.getError();
 
-      String errorMessage = (String) errorInfoHash.get("message");
-      String code = (String) errorInfoHash.get("code");
+      String errorMessage = errorInfoHash.getMessage();
+      String code = errorInfoHash.getCode();
       if (code != null) {
         errorMessage = code.concat(": ").concat(errorMessage);
       }
 
-      throw new EasyPostException(errorMessage);
+      throw new EasyPostException(errorMessage, errorContainer.getError());
     }
     catch(EasyPostException ex) {
       throw ex;
@@ -480,7 +475,7 @@ public abstract class EasyPostResource {
         throw e;
       }
       catch (Exception e) {
-        throw new EasyPostException(String.format("An error occured. Response code: %s Response body: %s", rCode, rBody));
+        throw new EasyPostException(String.format("An error occurred. Response code: %s Response body: %s", rCode, rBody));
       }
     }
 	}
