@@ -535,8 +535,6 @@ public class EasyPostTest {
     Address address = Address.create(addressHash);
   }
 
-  @Rule public ExpectedException exception = ExpectedException.none();
-
   @Test
   public void testAddressErrorParses() throws EasyPostException {
     Map<String, Object> addressHash = new HashMap<String, Object>();
